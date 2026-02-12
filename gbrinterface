@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goldback Retail Terminal</title>
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark-gold: #AA8C2C;
+            --green: #2E8B57;
+            --bg: #f8f9fa;
+            --text: #2c3e50;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 450px;
+            width: 100%;
+            border-top: 8px solid var(--gold);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--dark-gold);
+            font-size: 1.8rem;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f3f5;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .status-bar span {
+            font-weight: 600;
+        }
+
+        #fetchBtn {
+            background: none;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        #fetchBtn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .currency-input {
+            position: relative;
+        }
+
+        .currency-input span {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 14px 14px 14px 30px;
+            font-size: 1.2rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        /* Results Section */
+        .results-card {
+            background: #fff8e1; /* Light gold tint */
+            border: 1px solid #faeab1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: center;
+            display: none;
+        }
+
+        .big-total {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-gold);
+            margin: 10px 0;
+        }
+
+        .sub-total {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .stack-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stack-badge {
+            background: white;
+            border: 1px solid var(--gold);
+            color: var(--dark-gold);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        /* Denomination Buttons */
+        .payment-section {
+            margin-top: 2rem;
+            border-top: 2px dashed #eee;
+            padding-top: 1.5rem;
+        }
+
+        .payment-section h3 {
+            font-size: 1rem;
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .denoms {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .denom-btn {
+            background: var(--text);
+            color: white;
+            border: none;
+            padding: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: transform 0.1s;
+        }
+
+        .denom-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Goldback Colors */
+        .d-1 { background: #AA8C2C; }
+        .d-5 { background: #2E8B57; }
+        .d-10 { background: #2c3e50; }
+        .d-25 { background: #8e44ad; }
+        .d-50 { background: #c0392b; }
+
+        .payment-display {
+            background: #f1f3f5;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .change-box {
+            margin-top: 15px;
+            text-align: center;
+            padding: 10px;
+            background: var(--green);
+            color: white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: #999;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Goldback Terminal</h1>
+            <div class="status-bar">
+                <span id="rateStatus">Rate: <span id="currentRateDisplay">...</span></span>
+                <button id="fetchBtn" onclick="fetchRate()">Refresh Rate</button>
+            </div>
+        </header>
+
+        <div class="input-group">
+            <label for="rate">Exchange Rate (USD per 1 GB)</label>
+            <div class="currency-input">
+                <span>$</span>
+                <input type="number" id="rate" placeholder="0.00" step="0.01" oninput="calculateNeeds()">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="price">Sale Total (USD)</label>
+            <div class="currency-input">
+                <span>$</span>
+                <input type="number" id="price" placeholder="0.00" step="0.01" oninput="calculateNeeds()">
+            </div>
+        </div>
+
+        <div id="results" class="results-card">
+            <div>Customer Pays</div>
+            <div class="big-total" id="gbNeeded">0 GB</div>
+            <div class="sub-total" id="usdValue">Value: $0.00</div>
+            
+            <div class="stack-display" id="stackDisplay"></div>
+        </div>
+
+        <div class="payment-section">
+            <h3>Counter (Tap notes received)</h3>
+            <div class="denoms">
+                <button class="denom-btn d-1" onclick="addPayment(1)">1</button>
+                <button class="denom-btn d-5" onclick="addPayment(5)">5</button>
+                <button class="denom-btn d-10" onclick="addPayment(10)">10</button>
+                <button class="denom-btn d-25" onclick="addPayment(25)">25</button>
+                <button class="denom-btn d-50" onclick="addPayment(50)">50</button>
+            </div>
+            
+            <div class="payment-display">
+                <span>Tendered:</span>
+                <strong id="tenderedDisplay">0 GB</strong>
+                <button class="reset-btn" onclick="resetPayment()">Clear</button>
+            </div>
+
+            <div id="changeBox" class="change-box">
+                Change Due: <strong id="changeAmount">$0.00</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -- STATE MANAGEMENT --
+        let currentTendered = 0;
+
+        // -- INITIALIZATION --
+        window.onload = function() {
+            // Load saved rate or default
+            const savedRate = localStorage.getItem('gb_rate');
+            if(savedRate) {
+                document.getElementById('rate').value = savedRate;
+                document.getElementById('currentRateDisplay').innerText = "$" + savedRate;
+            } else {
+                fetchRate(); // Auto-fetch on first load if no saved rate
+            }
+        };
+
+        // -- PRICE FETCHING --
+        async function fetchRate() {
+            const btn = document.getElementById('fetchBtn');
+            const status = document.getElementById('currentRateDisplay');
+            
+            btn.innerText = "Loading...";
+            status.innerText = "Fetching...";
+
+            try {
+                // We use allorigins as a CORS proxy to read goldback.com
+                const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.goldback.com/exchange-rates');
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (data.contents) {
+                    // Regex to find "1 = $X.XX" or similar pattern on their page
+                    // Looking for the specific text from their site structure
+                    const html = data.contents;
+                    
+                    // Matches "1 = $4.15" or "1 : $4.15" pattern often found on their list
+                    const regex = /1\s*[:=]\s*\$([0-9]+\.[0-9]{2})/i;
+                    const match = html.match(regex);
+
+                    if (match && match[1]) {
+                        const rate = parseFloat(match[1]);
+                        document.getElementById('rate').value = rate;
+                        document.getElementById('currentRateDisplay').innerText = "$" + rate;
+                        localStorage.setItem('gb_rate', rate);
+                        calculateNeeds();
+                        btn.innerText = "Updated!";
+                        setTimeout(() => btn.innerText = "Refresh Rate", 2000);
+                    } else {
+                        throw new Error("Price pattern not found");
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                btn.innerText = "Failed";
+                status.innerText = "Manual Input";
+                alert("Could not auto-fetch rate. Please enter the rate manually from the website.");
+                setTimeout(() => btn.innerText = "Refresh Rate", 3000);
+            }
+        }
+
+        // -- CORE CALCULATOR --
+        function calculateNeeds() {
+            const rate = parseFloat(document.getElementById('rate').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const resultsDiv = document.getElementById('results');
+
+            if (!rate || !price) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            // Calculate GB needed (Rounded UP)
+            const exactGb = price / rate;
+            const neededGb = Math.ceil(exactGb);
+            const value = neededGb * rate;
+
+            // Update DOM
+            resultsDiv.style.display = 'block';
+            document.getElementById('gbNeeded').innerText = neededGb + " GB";
+            document.getElementById('usdValue').innerText = `(${neededGb} GB Value: $${value.toFixed(2)})`;
+
+            // Calculate Optimal Stack (Greedy Algorithm)
+            let remaining = neededGb;
+            let stackHtml = "";
+            const denoms = [50, 25, 10, 5, 1];
+            
+            denoms.forEach(denom => {
+                const count = Math.floor(remaining / denom);
+                if (count > 0) {
+                    stackHtml += `<div class="stack-badge">${count}x ${denom}</div>`;
+                    remaining -= count * denom;
+                }
+            });
+            document.getElementById('stackDisplay').innerHTML = stackHtml;
+
+            // Update Change if tendered exists
+            calculateChange();
+        }
+
+        // -- PAYMENT COUNTER --
+        function addPayment(amount) {
+            currentTendered += amount;
+            updateTenderedUI();
+        }
+
+        function resetPayment() {
+            currentTendered = 0;
+            updateTenderedUI();
+        }
+
+        function updateTenderedUI() {
+            document.getElementById('tenderedDisplay').innerText = currentTendered + " GB";
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const rate = parseFloat(document.getElementById('rate').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const changeBox = document.getElementById('changeBox');
+            
+            if (!rate || !price || currentTendered === 0) {
+                changeBox.style.display = 'none';
+                return;
+            }
+
+            const tenderedValue = currentTendered * rate;
+            const change = tenderedValue - price;
+
+            if (change >= 0) {
+                changeBox.style.display = 'block';
+                changeBox.style.background = 'var(--green)';
+                changeBox.innerHTML = `Change Due: <strong style="font-size:1.2rem">$${change.toFixed(2)}</strong>`;
+            } else {
+                changeBox.style.display = 'block';
+                changeBox.style.background = '#e74c3c'; // Red for insufficient funds
+                changeBox.innerHTML = `Still Owe: <strong>$${Math.abs(change).toFixed(2)}</strong>`;
+            }
+        }
+    </script>
+</body>
+</html>

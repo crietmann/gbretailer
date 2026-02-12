@@ -1,0 +1,490 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goldback Retail Terminal v6</title>
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark-gold: #AA8C2C;
+            --green: #27ae60;
+            --red: #c0392b;
+            --bg: #f0f2f5;
+            --text: #2c3e50;
+            --card-bg: #ffffff;
+            --toggle-bg: #ccc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            max-width: 420px;
+            width: 100%;
+            border-top: 6px solid var(--gold);
+        }
+
+        /* Header & Toggle */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--dark-gold);
+            font-size: 1.4rem;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #666;
+            gap: 8px;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--toggle-bg);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Status Bar */
+        .status-bar {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+
+        #fetchBtn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #555;
+        }
+
+        /* Inputs */
+        .input-group { margin-bottom: 1rem; }
+        
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9rem;
+        }
+
+        .currency-input { position: relative; }
+        .currency-input span {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 12px 12px 28px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border 0.2s;
+        }
+        input[type="number"]:focus { border-color: var(--gold); outline: none; }
+
+        /* Results */
+        .results-card {
+            background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
+            border: 1px solid #faeab1;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+            text-align: center;
+            display: none;
+        }
+
+        .big-total {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-gold);
+            margin: 5px 0;
+        }
+
+        .stack-display {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stack-badge {
+            background: white;
+            border: 1px solid var(--gold);
+            color: #8a6d1c;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.15);
+        }
+
+        /* Payment Pad */
+        .payment-section {
+            margin-top: 2rem;
+            border-top: 2px dashed #eee;
+            padding-top: 1.5rem;
+        }
+
+        .denoms {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .d-05 { display: none; background: #95a5a6; }
+        
+        .denom-btn {
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+        }
+        .denom-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        .d-1 { background: #AA8C2C; }
+        .d-5 { background: #2E8B57; }
+        .d-10 { background: #34495e; }
+        .d-25 { background: #8e44ad; }
+        .d-50 { background: #c0392b; }
+
+        .payment-display {
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ddd;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .change-box {
+            margin-top: 15px;
+            text-align: center;
+            padding: 12px;
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .reset-btn {
+            background: none;
+            border: none;
+            color: var(--red);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>GB Terminal</h1>
+            <div class="toggle-wrapper">
+                <span>Accept 0.5?</span>
+                <label class="switch">
+                    <input type="checkbox" id="fractionalToggle" onchange="toggleFractional()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </header>
+
+        <div class="status-bar">
+            <span>Rate: <strong id="currentRateDisplay">...</strong></span>
+            <button id="fetchBtn" onclick="tryFetchRate()">Refresh</button>
+        </div>
+
+        <div class="input-group">
+            <label>Exchange Rate ($/GB)</label>
+            <div class="currency-input">
+                <span>$</span>
+                <input type="number" id="rate" inputmode="decimal" step="0.01" oninput="handleManualInput()">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Sale Total (USD)</label>
+            <div class="currency-input">
+                <span>$</span>
+                <input type="number" id="price" inputmode="decimal" placeholder="0.00" step="0.01" oninput="calculateNeeds()">
+            </div>
+        </div>
+
+        <div id="results" class="results-card">
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: #888; letter-spacing: 1px;">Customer Pays</div>
+            <div class="big-total" id="gbNeeded">0 GB</div>
+            <div class="sub-total" style="color:#666; font-size:0.9rem" id="usdValue">Value: $0.00</div>
+            
+            <div class="stack-display" id="stackDisplay"></div>
+        </div>
+
+        <div class="payment-section">
+            <div style="margin-bottom:10px; font-weight:600; color:#555; font-size:0.9rem">Received:</div>
+            <div class="denoms" id="denomGrid">
+                <button class="denom-btn d-05" id="btn05" onclick="addPayment(0.5)">0.5</button>
+                <button class="denom-btn d-1" onclick="addPayment(1)">1</button>
+                <button class="denom-btn d-5" onclick="addPayment(5)">5</button>
+                <button class="denom-btn d-10" onclick="addPayment(10)">10</button>
+                <button class="denom-btn d-25" onclick="addPayment(25)">25</button>
+                <button class="denom-btn d-50" onclick="addPayment(50)">50</button>
+            </div>
+            
+            <div class="payment-display">
+                <span style="color:#888; font-size:0.9rem">Total:</span>
+                <strong id="tenderedDisplay" style="font-size:1.1rem">0 GB</strong>
+                <button class="reset-btn" onclick="resetPayment()">Clear</button>
+            </div>
+
+            <div id="changeBox" class="change-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // -- STATE --
+        let currentTendered = 0;
+        let useFractional = false;
+
+        // -- INIT --
+        window.onload = function() {
+            // Load Rate
+            const savedRate = localStorage.getItem('gb_rate');
+            if(savedRate) {
+                setRateProgrammatically(savedRate);
+            }
+            tryFetchRate();
+
+            // Load Toggle State
+            const savedToggle = localStorage.getItem('gb_fractional');
+            if(savedToggle === 'true') {
+                useFractional = true;
+                document.getElementById('fractionalToggle').checked = true;
+                toggleFractional(false);
+            }
+        };
+
+        // -- TOGGLE LOGIC --
+        function toggleFractional(save = true) {
+            useFractional = document.getElementById('fractionalToggle').checked;
+            const btn = document.getElementById('btn05');
+            const grid = document.getElementById('denomGrid');
+            
+            if(useFractional) {
+                btn.style.display = 'block';
+                grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+            } else {
+                btn.style.display = 'none';
+                grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+            }
+            if(save) localStorage.setItem('gb_fractional', useFractional);
+            calculateNeeds();
+            updateTenderedUI();
+        }
+
+        // -- RATE LOGIC --
+        function setRateProgrammatically(val) {
+            const numVal = parseFloat(val);
+            if(!isNaN(numVal)) {
+                document.getElementById('rate').value = numVal.toFixed(2);
+                document.getElementById('currentRateDisplay').innerText = "$" + numVal.toFixed(2);
+                localStorage.setItem('gb_rate', numVal);
+                calculateNeeds();
+            }
+        }
+
+        function handleManualInput() {
+            const val = document.getElementById('rate').value;
+            const numVal = parseFloat(val);
+            
+            if(!isNaN(numVal)) {
+                document.getElementById('currentRateDisplay').innerText = "$" + numVal.toFixed(2);
+                localStorage.setItem('gb_rate', numVal);
+                calculateNeeds();
+            }
+        }
+
+        // -- CLOUDFLARE FETCHING --
+        async function tryFetchRate() {
+            const btn = document.getElementById('fetchBtn');
+            const status = document.getElementById('currentRateDisplay');
+            
+            btn.innerText = "Fetching...";
+            
+            // YOUR CLOUDFLARE URL
+            const myWorkerUrl = 'https://goldback-proxy.lingering-sun-ff53.workers.dev'; 
+
+            try {
+                const response = await fetch(myWorkerUrl);
+                const data = await response.json();
+                
+                if (data.rate && data.rate !== "0.00") {
+                    setRateProgrammatically(data.rate);
+                    btn.innerText = "Success";
+                    setTimeout(() => btn.innerText = "Refresh", 2000);
+                } else {
+                    throw new Error("Rate zero or not found");
+                }
+
+            } catch (error) {
+                console.error(error);
+                btn.innerText = "Failed";
+                if (status.innerText === "...") status.innerText = "Set Manually";
+                setTimeout(() => btn.innerText = "Refresh", 3000);
+            }
+        }
+
+        // -- CALCULATIONS --
+        function calculateNeeds() {
+            const rate = parseFloat(document.getElementById('rate').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const resultsDiv = document.getElementById('results');
+
+            if (!rate || !price) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            const exactGb = price / rate;
+            let neededGb;
+
+            if (useFractional) {
+                neededGb = Math.ceil(exactGb * 2) / 2;
+            } else {
+                neededGb = Math.ceil(exactGb);
+            }
+
+            const value = neededGb * rate;
+
+            resultsDiv.style.display = 'block';
+            document.getElementById('gbNeeded').innerText = neededGb + " GB";
+            document.getElementById('usdValue').innerText = `(Value: $${value.toFixed(2)})`;
+
+            let remaining = neededGb;
+            let stackHtml = "";
+            const denoms = useFractional ? [50, 25, 10, 5, 1, 0.5] : [50, 25, 10, 5, 1];
+
+            denoms.forEach(denom => {
+                const count = Math.floor((remaining + 0.001) / denom);
+                if (count > 0) {
+                    stackHtml += `<div class="stack-badge">${count}x ${denom}</div>`;
+                    remaining -= count * denom;
+                }
+            });
+            document.getElementById('stackDisplay').innerHTML = stackHtml;
+            
+            calculateChange();
+        }
+
+        // -- PAYMENT --
+        function addPayment(amount) {
+            currentTendered += amount;
+            updateTenderedUI();
+        }
+
+        function resetPayment() {
+            currentTendered = 0;
+            updateTenderedUI();
+        }
+
+        function updateTenderedUI() {
+            document.getElementById('tenderedDisplay').innerText = currentTendered + " GB";
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const rate = parseFloat(document.getElementById('rate').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const changeBox = document.getElementById('changeBox');
+            
+            if (!rate || !price || currentTendered === 0) {
+                changeBox.style.display = 'none';
+                return;
+            }
+
+            const tenderedValue = currentTendered * rate;
+            const change = tenderedValue - price;
+
+            changeBox.style.display = 'block';
+            if (change >= -0.01) {
+                changeBox.style.background = 'var(--green)';
+                changeBox.innerHTML = `Change Due: <strong style="font-size:1.2rem; margin-left:5px">$${change.toFixed(2)}</strong>`;
+            } else {
+                changeBox.style.background = 'var(--red)';
+                changeBox.innerHTML = `Still Owe: <strong style="font-size:1.2rem; margin-left:5px">$${Math.abs(change).toFixed(2)}</strong>`;
+            }
+        }
+    </script>
+</body>
+</html>

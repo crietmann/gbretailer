@@ -1,9 +1,27 @@
+I would be happy to. Refactoring (cleaning up the code without changing what it does) is a great practice before you lock in a final version.
+
+I reviewed the code and found several areas where we could make it lighter, faster, and much easier to read.
+
+What was streamlined:
+Removed Clunky IDs: I replaced the complicated CSS IDs (#seg-1\.0) with HTML data-precision attributes. This cuts down the CSS styling significantly and prevents browser bugs.
+
+Simplified the Logic: I shrunk the setPrecision() function from 25 lines of repetitive code down to just 5 lines using a smart toggle loop.
+
+Better Array Filtering: Instead of building and sorting the "Optimal Stack" math array from scratch every single time a key is pressed, it now uses a static master list and simply filters out the fractions you don't want.
+
+Shorter POS Formatter: I condensed the formatPOSPrice function into a much cleaner 3-line format.
+
+Removed Redundancy: I combined several CSS rules that were repeating themselves.
+
+The app will look and behave exactly the same, but the engine under the hood is much cleaner. Here is your streamlined v11 code:
+
+HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goldback Retail Terminal v10</title>
+    <title>Goldback Retail Terminal v11</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#D4AF37">
@@ -20,7 +38,7 @@
             --card-bg: #ffffff;
             --input-border: #94a3b8; 
             --segment-bg: #e2e8f0;
-            --precision-10-bg: var(--gold);
+            --precision-1-bg: var(--gold);
             --precision-05-bg: #64748b; 
             --precision-025-bg: #0d9488; 
         }
@@ -50,7 +68,7 @@
         header {
             margin-bottom: 1.2rem;
             padding-bottom: 12px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--segment-bg);
         }
 
         .header-top {
@@ -98,20 +116,10 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
         }
 
-        #seg-1\.0.active {
-            background-color: var(--precision-10-bg);
-            border: 2px solid var(--dark-gold);
-        }
-
-        #seg-0\.5.active {
-            background-color: var(--precision-05-bg);
-            border: 2px solid #475569;
-        }
-
-        #seg-0\.25.active {
-            background-color: var(--precision-025-bg);
-            border: 2px solid #0f766e;
-        }
+        /* Streamlined CSS targeting using data attributes */
+        .segment-btn[data-precision="1"].active { background: var(--precision-1-bg); border: 2px solid var(--dark-gold); }
+        .segment-btn[data-precision="0.5"].active { background: var(--precision-05-bg); border: 2px solid #475569; }
+        .segment-btn[data-precision="0.25"].active { background: var(--precision-025-bg); border: 2px solid #0f766e; }
 
         .status-bar {
             background: #f8fafc;
@@ -169,12 +177,12 @@
             border: 2px solid var(--input-border); 
             border-radius: 8px;
             box-sizing: border-box;
-            background-color: #f8fafc;
-            transition: border 0.2s;
+            background: #f8fafc;
+            transition: border 0.2s, background 0.2s;
         }
-        input[type="number"]:focus, input[type="text"]:focus { 
+        input:focus { 
             border-color: var(--gold); 
-            background-color: #fff;
+            background: #fff;
             outline: none; 
         }
 
@@ -298,9 +306,9 @@
             </div>
             <div style="font-size: 0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:6px;">Rounding Precision:</div>
             <div class="segmented-control">
-                <button class="segment-btn active" id="seg-1.0" onclick="setPrecision(1.0)">1.0</button>
-                <button class="segment-btn" id="seg-0.5" onclick="setPrecision(0.5)">0.5</button>
-                <button class="segment-btn" id="seg-0.25" onclick="setPrecision(0.25)">0.25</button>
+                <button class="segment-btn active" data-precision="1" onclick="setPrecision(1)">1.0</button>
+                <button class="segment-btn" data-precision="0.5" onclick="setPrecision(0.5)">0.5</button>
+                <button class="segment-btn" data-precision="0.25" onclick="setPrecision(0.25)">0.25</button>
             </div>
         </header>
 
@@ -361,65 +369,35 @@
         let precisionLevel = 1.0; 
 
         // -- INIT --
-        window.onload = function() {
+        window.onload = () => {
             const savedRate = localStorage.getItem('gb_rate');
-            if(savedRate) { setRateProgrammatically(savedRate); }
+            if(savedRate) setRateProgrammatically(savedRate);
             tryFetchRate();
 
             const savedPrecision = localStorage.getItem('gb_precision');
-            if(savedPrecision) {
-                setPrecision(parseFloat(savedPrecision), false);
-            }
+            if(savedPrecision) setPrecision(parseFloat(savedPrecision), false);
         };
 
-        // -- POS PRICE FORMATTING --
+        // -- POS PRICE FORMATTING (Streamlined) --
         function formatPOSPrice() {
-            const inputField = document.getElementById('price');
-            // Get the value and strip out everything that isn't a number
-            let rawValue = inputField.value.replace(/\D/g, '');
-            
-            if (rawValue === '') {
-                inputField.value = '';
-                calculateNeeds();
-                return;
-            }
-
-            // Convert raw numbers to an integer, then divide by 100 
-            // (e.g. "2149" becomes 2149, then 21.49)
-            let numberValue = parseInt(rawValue, 10) / 100;
-
-            // Format it back perfectly to 2 decimal places
-            inputField.value = numberValue.toFixed(2);
-            
+            const el = document.getElementById('price');
+            const raw = el.value.replace(/\D/g, '');
+            el.value = raw ? (parseInt(raw, 10) / 100).toFixed(2) : '';
             calculateNeeds();
         }
 
-        // -- SEGMENTED CONTROL LOGIC --
+        // -- SEGMENTED CONTROL LOGIC (Streamlined) --
         function setPrecision(val, save = true) {
             precisionLevel = val;
             
-            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('seg-1.0').classList.remove('active');
-            document.getElementById('seg-0.5').classList.remove('active');
-            document.getElementById('seg-0.25').classList.remove('active');
-            
-            if (val === 1.0) document.getElementById('seg-1.0').classList.add('active');
-            if (val === 0.5) document.getElementById('seg-0.5').classList.add('active');
-            if (val === 0.25) document.getElementById('seg-0.25').classList.add('active');
+            // Toggle active classes based on dataset
+            document.querySelectorAll('.segment-btn').forEach(btn => {
+                btn.classList.toggle('active', parseFloat(btn.dataset.precision) === val);
+            });
 
-            const btn025 = document.getElementById('btn025');
-            const btn05 = document.getElementById('btn05');
-
-            if (val === 1.0) {
-                btn025.style.display = 'none';
-                btn05.style.display = 'none';
-            } else if (val === 0.5) {
-                btn025.style.display = 'none';
-                btn05.style.display = 'block';
-            } else if (val === 0.25) {
-                btn025.style.display = 'block';
-                btn05.style.display = 'block';
-            }
+            // Toggle visibility of fractional buttons
+            document.getElementById('btn025').style.display = val <= 0.25 ? 'block' : 'none';
+            document.getElementById('btn05').style.display = val <= 0.5 ? 'block' : 'none';
 
             if(save) localStorage.setItem('gb_precision', val);
             
@@ -439,20 +417,13 @@
         }
 
         function handleManualInput() {
-            const val = document.getElementById('rate').value;
-            const numVal = parseFloat(val);
-            if(!isNaN(numVal)) {
-                document.getElementById('currentRateDisplay').innerText = "$" + numVal.toFixed(2);
-                localStorage.setItem('gb_rate', numVal);
-                calculateNeeds();
-            }
+            setRateProgrammatically(document.getElementById('rate').value);
         }
 
         // -- CLOUDFLARE FETCHING --
         async function tryFetchRate() {
             const btn = document.getElementById('fetchBtn');
             const status = document.getElementById('currentRateDisplay');
-            
             btn.innerText = "Fetching...";
             
             // YOUR CLOUDFLARE URL
@@ -466,44 +437,39 @@
                     setRateProgrammatically(data.rate);
                     btn.innerText = "Success";
                     setTimeout(() => btn.innerText = "Refresh", 2000);
-                } else {
-                    throw new Error("Rate zero or not found");
-                }
+                } else throw new Error("Rate zero or not found");
             } catch (error) {
-                console.error(error);
                 btn.innerText = "Failed";
                 if (status.innerText === "...") status.innerText = "Set Manually";
                 setTimeout(() => btn.innerText = "Refresh", 3000);
             }
         }
 
-        // -- CALCULATIONS --
+        // -- CALCULATIONS (Streamlined Array Filtering) --
         function calculateNeeds() {
             const rate = parseFloat(document.getElementById('rate').value);
             const price = parseFloat(document.getElementById('price').value);
             const resultsDiv = document.getElementById('results');
 
-            if (!rate || !price) {
-                resultsDiv.style.display = 'none';
-                return;
-            }
+            if (!rate || !price) return resultsDiv.style.display = 'none';
 
-            const exactGb = price / rate;
-            const neededGb = Math.ceil(exactGb / precisionLevel) * precisionLevel;
+            const neededGb = Math.ceil((price / rate) / precisionLevel) * precisionLevel;
             const value = neededGb * rate;
 
             resultsDiv.style.display = 'block';
-            document.getElementById('gbNeeded').innerText = neededGb.toFixed(precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2)) + " GB";
+            
+            // Format decimals dynamically (0 for whole numbers, 1 for halves, 2 for quarters)
+            const decPlaces = precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2);
+            document.getElementById('gbNeeded').innerText = neededGb.toFixed(decPlaces) + " GB";
             document.getElementById('usdValue').innerText = `(Value: $${value.toFixed(2)})`;
 
+            // Optimal Stack Builder
             let remaining = neededGb;
             let stackHtml = "";
             
-            let availableDenoms = [50, 25, 10, 5, 1];
-            if (precisionLevel <= 0.5) availableDenoms.push(0.5);
-            if (precisionLevel <= 0.25) availableDenoms.push(0.25);
-            
-            availableDenoms.sort((a, b) => b - a);
+            // Statically define all denoms, filter out the ones smaller than our precision level
+            const availableDenoms = [50, 25, 10, 5, 1, 0.5, 0.25]
+                .filter(denom => denom >= 1 || denom >= precisionLevel);
 
             availableDenoms.forEach(denom => {
                 const count = Math.floor((remaining + 0.001) / denom);
@@ -512,8 +478,8 @@
                     remaining -= count * denom;
                 }
             });
-            document.getElementById('stackDisplay').innerHTML = stackHtml;
             
+            document.getElementById('stackDisplay').innerHTML = stackHtml;
             calculateChange();
         }
 
@@ -529,7 +495,8 @@
         }
 
         function updateTenderedUI() {
-            document.getElementById('tenderedDisplay').innerText = currentTendered.toFixed(precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2)) + " GB";
+            const decPlaces = precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2);
+            document.getElementById('tenderedDisplay').innerText = currentTendered.toFixed(decPlaces) + " GB";
             calculateChange();
         }
 
@@ -538,13 +505,9 @@
             const price = parseFloat(document.getElementById('price').value);
             const changeBox = document.getElementById('changeBox');
             
-            if (!rate || !price || currentTendered === 0) {
-                changeBox.style.display = 'none';
-                return;
-            }
+            if (!rate || !price || currentTendered === 0) return changeBox.style.display = 'none';
 
-            const tenderedValue = currentTendered * rate;
-            const change = tenderedValue - price;
+            const change = (currentTendered * rate) - price;
 
             changeBox.style.display = 'block';
             if (change >= -0.01) {

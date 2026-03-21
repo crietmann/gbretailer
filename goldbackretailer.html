@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<meta name="theme-color" content="#D4AF37">
-	<link rel="apple-touch-icon" href="https://example.com/icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goldback Retail Terminal v7</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#D4AF37">
+    
     <style>
         :root {
             --gold: #D4AF37;
             --dark-gold: #AA8C2C;
             --green: #27ae60;
             --red: #c0392b;
-            --bg: #f0f2f5;
-            --text: #2c3e50;
+            /* High Contrast Color Palette */
+            --bg: #cbd5e1; /* Darker slate-gray background to make the card pop */
+            --text: #0f172a; /* Near black for maximum readability */
+            --text-muted: #334155; /* Dark charcoal instead of light gray */
             --card-bg: #ffffff;
-            --toggle-bg: #ccc;
+            --toggle-bg: #64748b; /* Deep slate gray instead of light silver */
+            --input-border: #94a3b8; /* Stronger borders for input boxes */
         }
 
         body {
@@ -36,7 +39,7 @@
             background: var(--card-bg);
             padding: 1.5rem;
             border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); /* Stronger shadow */
             max-width: 420px;
             width: 100%;
             border-top: 6px solid var(--gold);
@@ -49,84 +52,92 @@
             align-items: center;
             margin-bottom: 1.5rem;
             padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 2px solid #e2e8f0;
         }
 
         h1 {
             margin: 0;
             color: var(--dark-gold);
             font-size: 1.4rem;
+            font-weight: 800;
         }
 
         .toggle-wrapper {
             display: flex;
             align-items: center;
-            font-size: 0.8rem;
-            color: #666;
-            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            gap: 10px;
         }
         
         .switch {
             position: relative;
             display: inline-block;
-            width: 44px;
-            height: 24px;
+            width: 48px; /* Slightly larger */
+            height: 26px;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute;
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--toggle-bg);
+            background-color: var(--toggle-bg); /* Now uses high-contrast slate */
             transition: .4s;
             border-radius: 34px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); /* Adds depth */
         }
         .slider:before {
             position: absolute;
             content: "";
             height: 18px;
             width: 18px;
-            left: 3px;
-            bottom: 3px;
+            left: 4px;
+            bottom: 4px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Shadows make the toggle button visible */
         }
         input:checked + .slider { background-color: var(--green); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         /* Status Bar */
         .status-bar {
-            background: #f8f9fa;
-            padding: 8px 12px;
+            background: #f8fafc;
+            padding: 10px 14px;
             border-radius: 8px;
             margin-bottom: 15px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 600;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--input-border);
         }
 
         #fetchBtn {
             background: white;
-            border: 1px solid #ddd;
-            padding: 4px 10px;
-            border-radius: 4px;
+            border: 2px solid var(--input-border);
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.75rem;
-            color: #555;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.05);
         }
+        #fetchBtn:active { transform: translateY(2px); box-shadow: none; }
 
         /* Inputs */
-        .input-group { margin-bottom: 1rem; }
+        .input-group { margin-bottom: 1.2rem; }
         
         label {
             display: block;
             margin-bottom: 0.4rem;
-            font-weight: 600;
-            color: #444;
-            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 0.95rem;
         }
 
         .currency-input { position: relative; }
@@ -135,85 +146,99 @@
             left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: #888;
-            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
         input[type="number"] {
             width: 100%;
-            padding: 12px 12px 12px 28px;
-            font-size: 1.1rem;
-            border: 2px solid #e0e0e0;
+            padding: 12px 12px 12px 32px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
+            border: 2px solid var(--input-border); /* Much darker border */
             border-radius: 8px;
             box-sizing: border-box;
+            background-color: #f8fafc;
             transition: border 0.2s;
         }
-        input[type="number"]:focus { border-color: var(--gold); outline: none; }
+        input[type="number"]:focus { 
+            border-color: var(--gold); 
+            background-color: #fff;
+            outline: none; 
+        }
 
         /* Results */
         .results-card {
             background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
-            border: 1px solid #faeab1;
+            border: 2px solid #faeab1;
             border-radius: 12px;
             padding: 1.25rem;
             margin-top: 1.5rem;
             text-align: center;
             display: none;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
         }
 
         .big-total {
-            font-size: 2.5rem;
-            font-weight: 800;
+            font-size: 2.8rem;
+            font-weight: 900;
             color: var(--dark-gold);
             margin: 5px 0;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
         }
 
         .stack-display {
             display: flex;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             margin-top: 12px;
             flex-wrap: wrap;
         }
 
         .stack-badge {
             background: white;
-            border: 1px solid var(--gold);
+            border: 2px solid var(--gold);
             color: #8a6d1c;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.15);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.2);
         }
 
         /* Payment Pad */
         .payment-section {
             margin-top: 2rem;
-            border-top: 2px dashed #eee;
+            border-top: 2px dashed var(--input-border);
             padding-top: 1.5rem;
         }
 
         .denoms {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 15px;
         }
         
-        .d-05 { display: none; background: #95a5a6; }
+        .d-05 { display: none; background: #64748b; } /* Darker silver/gray */
         
         .denom-btn {
             color: white;
             border: none;
-            padding: 12px 0;
+            padding: 14px 0;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 0.95rem;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
         }
-        .denom-btn:active { transform: translateY(2px); box-shadow: none; }
+        .denom-btn:active { 
+            transform: translateY(4px); 
+            box-shadow: 0 0 0 rgba(0,0,0,0.2); 
+        }
 
         .d-1 { background: #AA8C2C; }
         .d-5 { background: #2E8B57; }
@@ -222,24 +247,25 @@
         .d-50 { background: #c0392b; }
 
         .payment-display {
-            background: #fff;
-            padding: 10px 15px;
+            background: #f8fafc;
+            padding: 12px 16px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #ddd;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+            border: 2px solid var(--input-border);
         }
 
         .change-box {
             margin-top: 15px;
             text-align: center;
-            padding: 12px;
+            padding: 14px;
             color: white;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 700;
+            font-size: 1.1rem;
             display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
         
         .reset-btn {
@@ -248,7 +274,8 @@
             color: var(--red);
             text-decoration: underline;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -256,7 +283,7 @@
 
     <div class="container">
         <header>
-            <h1>GB Retail</h1>
+            <h1>GB Terminal</h1>
             <div class="toggle-wrapper">
                 <span>Accept 0.5?</span>
                 <label class="switch">
@@ -267,7 +294,7 @@
         </header>
 
         <div class="status-bar">
-            <span>Rate: <strong id="currentRateDisplay">...</strong></span>
+            <span>Rate: <strong id="currentRateDisplay" style="color: var(--dark-gold);">...</strong></span>
             <button id="fetchBtn" onclick="tryFetchRate()">Refresh</button>
         </div>
 
@@ -288,15 +315,15 @@
         </div>
 
         <div id="results" class="results-card">
-            <div style="font-size: 0.8rem; text-transform: uppercase; color: #888; letter-spacing: 1px;">Customer Pays</div>
+            <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Customer Pays</div>
             <div class="big-total" id="gbNeeded">0 GB</div>
-            <div class="sub-total" style="color:#666; font-size:0.9rem" id="usdValue">Value: $0.00</div>
+            <div class="sub-total" style="color:var(--text-muted); font-size:1rem; font-weight:600;" id="usdValue">Value: $0.00</div>
             
             <div class="stack-display" id="stackDisplay"></div>
         </div>
 
         <div class="payment-section">
-            <div style="margin-bottom:10px; font-weight:600; color:#555; font-size:0.9rem">Received:</div>
+            <div style="margin-bottom:12px; font-weight:800; color:var(--text); font-size:1rem;">Received:</div>
             <div class="denoms" id="denomGrid">
                 <button class="denom-btn d-05" id="btn05" onclick="addPayment(0.5)">0.5</button>
                 <button class="denom-btn d-1" onclick="addPayment(1)">1</button>
@@ -307,8 +334,8 @@
             </div>
             
             <div class="payment-display">
-                <span style="color:#888; font-size:0.9rem">Total:</span>
-                <strong id="tenderedDisplay" style="font-size:1.1rem">0 GB</strong>
+                <span style="color:var(--text-muted); font-weight:700; font-size:1rem;">Total:</span>
+                <strong id="tenderedDisplay" style="font-size:1.3rem; color:var(--text);">0 GB</strong>
                 <button class="reset-btn" onclick="resetPayment()">Clear</button>
             </div>
 
@@ -483,10 +510,10 @@
             changeBox.style.display = 'block';
             if (change >= -0.01) {
                 changeBox.style.background = 'var(--green)';
-                changeBox.innerHTML = `Change Due: <strong style="font-size:1.2rem; margin-left:5px">$${change.toFixed(2)}</strong>`;
+                changeBox.innerHTML = `Change Due: <strong style="font-size:1.3rem; margin-left:8px">$${change.toFixed(2)}</strong>`;
             } else {
                 changeBox.style.background = 'var(--red)';
-                changeBox.innerHTML = `Still Owe: <strong style="font-size:1.2rem; margin-left:5px">$${Math.abs(change).toFixed(2)}</strong>`;
+                changeBox.innerHTML = `Still Owe: <strong style="font-size:1.3rem; margin-left:8px">$${Math.abs(change).toFixed(2)}</strong>`;
             }
         }
     </script>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goldback Retail Terminal v9</title>
+    <title>Goldback Retail Terminal v10</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#D4AF37">
@@ -20,10 +20,9 @@
             --card-bg: #ffffff;
             --input-border: #94a3b8; 
             --segment-bg: #e2e8f0;
-            /* High Contrast Colors for Segments */
             --precision-10-bg: var(--gold);
-            --precision-05-bg: #64748b; /* Deep slate gray */
-            --precision-025-bg: #0d9488; /* Bright teal blue */
+            --precision-05-bg: #64748b; 
+            --precision-025-bg: #0d9488; 
         }
 
         body {
@@ -48,7 +47,6 @@
             border-top: 6px solid var(--gold);
         }
 
-        /* Header & Segmented Control */
         header {
             margin-bottom: 1.2rem;
             padding-bottom: 12px;
@@ -69,7 +67,6 @@
             font-weight: 800;
         }
 
-        /* Segmented Control Styles */
         .segmented-control {
             display: flex;
             background: var(--segment-bg);
@@ -82,7 +79,7 @@
 
         .segment-btn {
             flex: 1;
-            padding: 10px 0; /* Slightly larger targets */
+            padding: 10px 0; 
             border: none;
             background: transparent;
             border-radius: 6px;
@@ -94,9 +91,8 @@
             text-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
 
-        /* New specific active button stylings for maximum contrast */
         .segment-btn.active {
-            color: white; /* Contrast text on colorful background */
+            color: white; 
             font-weight: 900;
             text-shadow: 0 1px 3px rgba(0,0,0,0.3);
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
@@ -117,7 +113,6 @@
             border: 2px solid #0f766e;
         }
 
-        /* Status Bar */
         .status-bar {
             background: #f8fafc;
             padding: 10px 14px;
@@ -144,7 +139,6 @@
         }
         #fetchBtn:active { transform: translateY(2px); box-shadow: none; }
 
-        /* Inputs */
         .input-group { margin-bottom: 1.2rem; }
         
         label {
@@ -166,7 +160,7 @@
             font-weight: bold;
         }
 
-        input[type="number"] {
+        input[type="number"], input[type="text"] {
             width: 100%;
             padding: 12px 12px 12px 32px;
             font-size: 1.2rem;
@@ -178,13 +172,12 @@
             background-color: #f8fafc;
             transition: border 0.2s;
         }
-        input[type="number"]:focus { 
+        input[type="number"]:focus, input[type="text"]:focus { 
             border-color: var(--gold); 
             background-color: #fff;
             outline: none; 
         }
 
-        /* Results */
         .results-card {
             background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
             border: 2px solid #faeab1;
@@ -223,7 +216,6 @@
             box-shadow: 0 2px 4px rgba(212, 175, 55, 0.2);
         }
 
-        /* Payment Pad */
         .payment-section {
             margin-top: 2rem;
             border-top: 2px dashed var(--input-border);
@@ -329,7 +321,7 @@
             <label>Sale Total (USD)</label>
             <div class="currency-input">
                 <span>$</span>
-                <input type="number" id="price" inputmode="decimal" placeholder="0.00" step="0.01" oninput="calculateNeeds()">
+                <input type="text" id="price" inputmode="numeric" placeholder="0.00" oninput="formatPOSPrice()">
             </div>
         </div>
 
@@ -366,7 +358,7 @@
     <script>
         // -- STATE --
         let currentTendered = 0;
-        let precisionLevel = 1.0; // Default to whole numbers
+        let precisionLevel = 1.0; 
 
         // -- INIT --
         window.onload = function() {
@@ -374,31 +366,47 @@
             if(savedRate) { setRateProgrammatically(savedRate); }
             tryFetchRate();
 
-            // Load Precision State (using parseFloat for decimals)
             const savedPrecision = localStorage.getItem('gb_precision');
             if(savedPrecision) {
                 setPrecision(parseFloat(savedPrecision), false);
             }
         };
 
+        // -- POS PRICE FORMATTING --
+        function formatPOSPrice() {
+            const inputField = document.getElementById('price');
+            // Get the value and strip out everything that isn't a number
+            let rawValue = inputField.value.replace(/\D/g, '');
+            
+            if (rawValue === '') {
+                inputField.value = '';
+                calculateNeeds();
+                return;
+            }
+
+            // Convert raw numbers to an integer, then divide by 100 
+            // (e.g. "2149" becomes 2149, then 21.49)
+            let numberValue = parseInt(rawValue, 10) / 100;
+
+            // Format it back perfectly to 2 decimal places
+            inputField.value = numberValue.toFixed(2);
+            
+            calculateNeeds();
+        }
+
         // -- SEGMENTED CONTROL LOGIC --
         function setPrecision(val, save = true) {
             precisionLevel = val;
             
-            // 1. Update active button styling
             document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-            // Use standard JS to select the element to avoid decimal ID selector issues
-            document.getElementById('seg-' + val.toFixed(val === 1 ? 1 : (val === 0.5 ? 1 : 2))).classList.add('active');
-            
-            // Minor fix for ID consistency, specifically choosing exact strings on the buttons
             document.getElementById('seg-1.0').classList.remove('active');
             document.getElementById('seg-0.5').classList.remove('active');
             document.getElementById('seg-0.25').classList.remove('active');
+            
             if (val === 1.0) document.getElementById('seg-1.0').classList.add('active');
             if (val === 0.5) document.getElementById('seg-0.5').classList.add('active');
             if (val === 0.25) document.getElementById('seg-0.25').classList.add('active');
 
-            // 2. Show/Hide appropriate payment buttons
             const btn025 = document.getElementById('btn025');
             const btn05 = document.getElementById('btn05');
 
@@ -480,11 +488,7 @@
                 return;
             }
 
-            // 1. Calculate Exact Need
             const exactGb = price / rate;
-            
-            // 2. Round UP to the nearest precision level (1.0, 0.5, or 0.25)
-            // Math: Ceil(Exact / Precision) * Precision
             const neededGb = Math.ceil(exactGb / precisionLevel) * precisionLevel;
             const value = neededGb * rate;
 
@@ -492,20 +496,16 @@
             document.getElementById('gbNeeded').innerText = neededGb.toFixed(precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2)) + " GB";
             document.getElementById('usdValue').innerText = `(Value: $${value.toFixed(2)})`;
 
-            // 3. Optimal Stack Builder (Greedy)
             let remaining = neededGb;
             let stackHtml = "";
             
-            // Build the array of available notes based on the chosen precision
             let availableDenoms = [50, 25, 10, 5, 1];
             if (precisionLevel <= 0.5) availableDenoms.push(0.5);
             if (precisionLevel <= 0.25) availableDenoms.push(0.25);
             
-            // Ensure they stay sorted highest to lowest for greedy algorithm
             availableDenoms.sort((a, b) => b - a);
 
             availableDenoms.forEach(denom => {
-                // Epsilon added for floating point precision issues
                 const count = Math.floor((remaining + 0.001) / denom);
                 if (count > 0) {
                     stackHtml += `<div class="stack-badge">${count}x ${denom}</div>`;
@@ -529,7 +529,6 @@
         }
 
         function updateTenderedUI() {
-            // Updated total display precision
             document.getElementById('tenderedDisplay').innerText = currentTendered.toFixed(precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2)) + " GB";
             calculateChange();
         }

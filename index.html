@@ -416,8 +416,8 @@
             const status = document.getElementById('currentRateDisplay');
             btn.innerText = "Fetching...";
             
-            // YOUR CLOUDFLARE WORKER URL
-            const myWorkerUrl = 'https://goldback-proxy.lingering-sun-ff53.workers.dev'; 
+        // Add a timestamp to the end of the URL so the browser thinks it's a new link every time
+            const myWorkerUrl = 'https://goldback-proxy.lingering-sun-ff53.workers.dev?t=' + new Date().getTime();
 
             try {
                 const response = await fetch(myWorkerUrl);

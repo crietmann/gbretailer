@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goldback Retail Terminal v11</title>
+    <title>Goldback Retail Terminal v12</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#D4AF37">
@@ -98,7 +98,6 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.3);
         }
 
-        /* Streamlined CSS targeting using data attributes */
         .segment-btn[data-precision="1"].active { background: var(--precision-1-bg); border: 2px solid var(--dark-gold); }
         .segment-btn[data-precision="0.5"].active { background: var(--precision-05-bg); border: 2px solid #475569; }
         .segment-btn[data-precision="0.25"].active { background: var(--precision-025-bg); border: 2px solid #0f766e; }
@@ -137,6 +136,14 @@
             font-weight: 700;
             color: var(--text);
             font-size: 0.95rem;
+        }
+
+        .trust-badge {
+            font-size: 0.75rem;
+            color: var(--green);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .currency-input { position: relative; }
@@ -300,7 +307,10 @@
         </div>
 
         <div class="input-group">
-            <label>Exchange Rate ($/GB)</label>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem;">
+                <label style="margin-bottom: 0;">Exchange Rate ($/GB)</label>
+                <span class="trust-badge">✓ Official UPMA Retail Rate</span>
+            </div>
             <div class="currency-input">
                 <span>$</span>
                 <input type="number" id="rate" inputmode="decimal" step="0.01" oninput="handleManualInput()">
@@ -360,7 +370,7 @@
             if(savedPrecision) setPrecision(parseFloat(savedPrecision), false);
         };
 
-        // -- POS PRICE FORMATTING (Streamlined) --
+        // -- POS PRICE FORMATTING --
         function formatPOSPrice() {
             const el = document.getElementById('price');
             const raw = el.value.replace(/\D/g, '');
@@ -368,16 +378,14 @@
             calculateNeeds();
         }
 
-        // -- SEGMENTED CONTROL LOGIC (Streamlined) --
+        // -- SEGMENTED CONTROL LOGIC --
         function setPrecision(val, save = true) {
             precisionLevel = val;
             
-            // Toggle active classes based on dataset
             document.querySelectorAll('.segment-btn').forEach(btn => {
                 btn.classList.toggle('active', parseFloat(btn.dataset.precision) === val);
             });
 
-            // Toggle visibility of fractional buttons
             document.getElementById('btn025').style.display = val <= 0.25 ? 'block' : 'none';
             document.getElementById('btn05').style.display = val <= 0.5 ? 'block' : 'none';
 
@@ -408,7 +416,7 @@
             const status = document.getElementById('currentRateDisplay');
             btn.innerText = "Fetching...";
             
-            // YOUR CLOUDFLARE URL
+            // YOUR CLOUDFLARE WORKER URL
             const myWorkerUrl = 'https://goldback-proxy.lingering-sun-ff53.workers.dev'; 
 
             try {
@@ -427,7 +435,7 @@
             }
         }
 
-        // -- CALCULATIONS (Streamlined Array Filtering) --
+        // -- CALCULATIONS --
         function calculateNeeds() {
             const rate = parseFloat(document.getElementById('rate').value);
             const price = parseFloat(document.getElementById('price').value);
@@ -440,16 +448,13 @@
 
             resultsDiv.style.display = 'block';
             
-            // Format decimals dynamically (0 for whole numbers, 1 for halves, 2 for quarters)
             const decPlaces = precisionLevel === 1 ? 0 : (precisionLevel === 0.5 ? 1 : 2);
             document.getElementById('gbNeeded').innerText = neededGb.toFixed(decPlaces) + " GB";
             document.getElementById('usdValue').innerText = `(Value: $${value.toFixed(2)})`;
 
-            // Optimal Stack Builder
             let remaining = neededGb;
             let stackHtml = "";
             
-            // Statically define all denoms, filter out the ones smaller than our precision level
             const availableDenoms = [50, 25, 10, 5, 1, 0.5, 0.25]
                 .filter(denom => denom >= 1 || denom >= precisionLevel);
 

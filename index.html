@@ -506,6 +506,44 @@
                 changeBox.innerHTML = `Still Owe: <strong style="font-size:1.3rem; margin-left:8px">$${Math.abs(change).toFixed(2)}</strong>`;
             }
         }
+    // -- PWA INSTALL LOGIC --
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        // Check if the app is already installed
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        if (!isStandalone) {
+            // If iOS, show the button and give manual instructions when clicked
+            if (isIOS) {
+                installBtn.style.display = 'block';
+                installBtn.onclick = () => alert('To install on iOS: \n\n1. Tap the Share icon at the bottom of Safari.\n2. Scroll down and tap "Add to Home Screen".');
+            }
+
+            // If Android, listen for the native install prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.style.display = 'block';
+
+                installBtn.addEventListener('click', async () => {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        }
+
+        // Register the Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW setup failed: ', err));
+            });
+        }
     </script>
 </body>
 </html>

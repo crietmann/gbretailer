@@ -1,0 +1,17 @@
+{
+  "name": "Goldback Retail Terminal",
+  "short_name": "GB Terminal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#cbd5e1",
+  "theme_color": "#D4AF37",
+  "description": "Point of Sale calculator for Goldback currency.",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
